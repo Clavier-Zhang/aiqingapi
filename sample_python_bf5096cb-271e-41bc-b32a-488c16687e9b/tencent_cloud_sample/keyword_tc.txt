@@ -1,0 +1,1 @@
+{"Keywords": [{"Score": 1.0, "Word": "房子"}, {"Score": 0.9655268, "Word": "东西"}, {"Score": 0.67915213, "Word": "问题"}, {"Score": 0.5285092, "Word": "个人"}, {"Score": 0.5004697, "Word": "协议"}], "RequestId": "dc6180a8-1cb4-4d21-9733-ecbef69f7f6b"}

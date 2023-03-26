@@ -12,6 +12,8 @@ from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentClo
 from tencentcloud.nlp.v20190408 import nlp_client, models
 import requests
 
+from ninterface import translate_json_to_record, show_record
+
 TC_API_KEY = "AKIDlOnodEaidMs9D3e7MMTVQCm9K6h4D8oL"
 TC_API_SECRET = "NIzRffRzIMDpCKdiaFgtsiMmyxkJekbP"
 
@@ -20,6 +22,12 @@ XF_APP_ID = "4f59c1e9"
 
 BD_API_KEY = "e9aYf4di6t3YjOLeiLkhzFXu"
 BD_SECRET_KEY = "LwfBelWkCreGfEuvqdmrGYpjCDHHMM6b"
+
+
+def save_to_file(filename, text):
+    text_file = open(f"{filename}.txt", "w")
+    n = text_file.write(text)
+    text_file.close()
 
 
 class API:
@@ -42,8 +50,8 @@ class API:
             }
             req.from_json_string(json.dumps(params))
 
-            resp = client.AutoSummarization(req)
-            print(resp.to_json_string())
+            resp = client.AutoSummarization(req).Summary
+            return resp
 
         except TencentCloudSDKException as err:
             print(err)
@@ -59,7 +67,6 @@ class API:
                   "client_id": BD_API_KEY, "client_secret": BD_SECRET_KEY}
         token = str(requests.post(
             url, params=params).json().get("access_token"))
-        print(token)
 
         url = "https://aip.baidubce.com/rpc/2.0/nlp/v1/news_summary?charset=UTF-8&charset=&access_token=" + token
         url = f"https://aip.baidubce.com/rpc/2.0/nlp/v1/news_summary?access_token={token}&charset=UTF-8"
@@ -72,9 +79,12 @@ class API:
             'Accept': 'application/json'
         }
 
-        response = requests.request("POST", url, headers=headers, data=payload)
+        response = requests.request(
+            "POST", url, headers=headers, data=payload).json()['summary']
 
-        print(response.text)
+        save_to_file("text_abstraction_bd", response)
+
+        return response
 
     @staticmethod
     def keyword_xf(text):
@@ -94,8 +104,11 @@ class API:
                     'X-CheckSum': x_checksum}
         req = urllib.request.Request(url, body, x_header)
         result = urllib.request.urlopen(req)
-        result = result.read()
-        print(result.decode('utf-8'))
+        result = result.read().decode('utf-8')
+        print(result)
+
+        save_to_file("keyword_xf", result)
+        return result
 
     @staticmethod
     def keyword_tc(text):
@@ -116,15 +129,72 @@ class API:
             }
             req.from_json_string(json.dumps(params))
 
-            resp = client.KeywordsExtraction(req)
-            print(resp.to_json_string())
+            resp = client.KeywordsExtraction(req).to_json_string()
+            print(resp)
+            save_to_file("keyword_tc", resp)
+            return resp
 
         except TencentCloudSDKException as err:
             print(err)
 
 
-API.keyword_xf("汉皇重色思倾国，御宇多年求不得。杨家有女初长成，养在深闺人未识。天生丽质难自弃，一朝选在君王侧。")
-API.keyword_tc("汉皇重色思倾国，御宇多年求不得。杨家有女初长成，养在深闺人未识。天生丽质难自弃，一朝选在君王侧。")
+def get_text_from_json():
+    lines = translate_json_to_record('./ntemp.json')
 
-API.text_abstraction_tc("中新经纬客户端4月4日电 中方于3月31日宣布对美国进口汽车及零部件暂停加征关税3个月，商务部发言人高峰4日在例行记者会上表示，3月5日，美方正式宣布再次推迟对中国输美产品加征关税税率提升至25%的期限。双方上述决定有助于为中美经贸磋商创造良好的氛围。发布会上，高峰表示，中美两国元首在G20阿根廷峰会期间举行会晤，就经贸问题达成重要共识。作为两国元首共识的一部分，美方对中国输美产品加征关税税率提升至25%的期限从2019年1月1日推迟到3月2日。之后，为推动磋商，中方宣布对原产于美国的汽车及零部件暂停加征关税3个月，截止日期为3月31日。3月5日，美方正式宣布再次推迟对中国输美产品加征关税税率提升至25%的期限，具体期限另行通知。3月31日，中国国务院关税税则委员会宣布延长对原产于美国的汽车及零部件暂停加征关税措施，截止日期另行通知。高峰指出，双方上述决定无疑有助于为中美经贸磋商创造良好的氛围。")
-API.text_abstraction_bd("中新经纬客户端4月4日电 中方于3月31日宣布对美国进口汽车及零部件暂停加征关税3个月，商务部发言人高峰4日在例行记者会上表示，3月5日，美方正式宣布再次推迟对中国输美产品加征关税税率提升至25%的期限。双方上述决定有助于为中美经贸磋商创造良好的氛围。发布会上，高峰表示，中美两国元首在G20阿根廷峰会期间举行会晤，就经贸问题达成重要共识。作为两国元首共识的一部分，美方对中国输美产品加征关税税率提升至25%的期限从2019年1月1日推迟到3月2日。之后，为推动磋商，中方宣布对原产于美国的汽车及零部件暂停加征关税3个月，截止日期为3月31日。3月5日，美方正式宣布再次推迟对中国输美产品加征关税税率提升至25%的期限，具体期限另行通知。3月31日，中国国务院关税税则委员会宣布延长对原产于美国的汽车及零部件暂停加征关税措施，截止日期另行通知。高峰指出，双方上述决定无疑有助于为中美经贸磋商创造良好的氛围。")
+    lines.sort(key=lambda line: int(line['start_time']))
+    res = []
+    for line in lines:
+        if not res:
+            res.append("说话人" + line['role'] + "说\"" + line['record'])
+        elif line['role'] == res[-1][0]:
+            res[-1] += line['record']
+        else:
+            res[-1] += "\""
+            res.append("说话人" + line['role'] + "说\"" + line['record'])
+    # for line in res:
+    #     if line[-1] != '。':
+    #         line += '。'
+    return ''.join(res)
+
+
+def generate_abstraction(text, api_method):
+    res = []
+    for i in range(len(text) // 2000):
+        seg = text[i*2000: (i+1)*2000]
+        print(len(seg))
+        abstraction = api_method(seg)
+
+        res.append(abstraction)
+    return ''.join(res)
+
+
+def generate_(text, api_method):
+    res = []
+    for i in range(len(text) // 2000):
+        seg = text[i*2000: (i+1)*2000]
+        print(len(seg))
+        abstraction = api_method(seg)
+
+        res.append(abstraction)
+    return ''.join(res)
+
+
+data = get_text_from_json()
+print(len(data))
+
+print(data)
+save_to_file("data", data)
+
+
+save_to_file("text_abstraction_tc", generate_abstraction(
+    data, API.text_abstraction_tc))
+save_to_file("text_abstraction_bd", generate_abstraction(
+    data, API.text_abstraction_bd))
+
+
+print('   ')
+API.keyword_xf(data)
+print('   ')
+# data length cannot exceed 10000, since keyword detection cannot be separated
+API.keyword_tc(data[:10000])
+print('   ')
