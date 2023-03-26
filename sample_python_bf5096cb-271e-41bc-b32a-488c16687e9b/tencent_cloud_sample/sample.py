@@ -35,3 +35,12 @@ try:
 
 except TencentCloudSDKException as err:
     print(err)
+
+
+# 文本摘要：
+# https://cloud.tencent.com/document/product/271/35499
+# https://support.huaweicloud.com/api-nlp/nlp_03_0071.html
+# 关键词提取：
+# https://www.xfyun.cn/doc/nlp/keyword-extraction/API.html
+# https://support.huaweicloud.com/api-nlp/nlp_03_0084.html
+# https://cloud.tencent.com/document/api/271/35498
