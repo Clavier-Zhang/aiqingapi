@@ -105,10 +105,12 @@ class API:
         req = urllib.request.Request(url, body, x_header)
         result = urllib.request.urlopen(req)
         result = result.read().decode('utf-8')
-        print(result)
+        # print(result)
+        items = json.loads(result)['data']['ke']
 
-        save_to_file("keyword_xf", result)
-        return result
+        keywords = [item["word"] for item in items]
+
+        return keywords
 
     @staticmethod
     def keyword_tc(text):
@@ -129,10 +131,11 @@ class API:
             }
             req.from_json_string(json.dumps(params))
 
-            resp = client.KeywordsExtraction(req).to_json_string()
-            print(resp)
-            save_to_file("keyword_tc", resp)
-            return resp
+            items = client.KeywordsExtraction(req).Keywords
+            keywords = [item.Word for item in items]
+            print(keywords)
+
+            return keywords
 
         except TencentCloudSDKException as err:
             print(err)
@@ -168,33 +171,34 @@ def generate_abstraction(text, api_method):
     return ''.join(res)
 
 
-def generate_(text, api_method):
+def generate_keywords(text, api_method):
     res = []
-    for i in range(len(text) // 2000):
-        seg = text[i*2000: (i+1)*2000]
+    for i in range(len(text) // 10000):
+        seg = text[i*10000: (i+1)*10000]
         print(len(seg))
-        abstraction = api_method(seg)
+        keywords = api_method(seg)
 
-        res.append(abstraction)
-    return ''.join(res)
+        res += keywords
+    res = list(set(res))
+    return ','.join(res)
 
 
 data = get_text_from_json()
 print(len(data))
 
-print(data)
+# print(data)
 save_to_file("data", data)
 
 
 save_to_file("text_abstraction_tc", generate_abstraction(
     data, API.text_abstraction_tc))
+
 save_to_file("text_abstraction_bd", generate_abstraction(
     data, API.text_abstraction_bd))
 
+save_to_file("text_abstraction_xf", generate_keywords(
+    data, API.keyword_xf))
 
-print('   ')
-API.keyword_xf(data)
-print('   ')
-# data length cannot exceed 10000, since keyword detection cannot be separated
-API.keyword_tc(data[:10000])
-print('   ')
+save_to_file("text_abstraction_tc", generate_keywords(
+    data, API.keyword_tc))
+
